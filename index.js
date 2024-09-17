@@ -1,3 +1,108 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("Document Prêt");
+    const startButton = document.getElementById('start');
+    const grid = document.getElementById('grid');
+    const defaultTryNumber = 6;
+    const randomWord = "Banane";
+    const letters = document.getElementsByClassName('btn-letter');
+    let indexRow = 0;
+    let indexColumn = 1;
+    const enterButton = document.getElementById('enter');
+    const backspaceButton = document.getElementById('backspace');
+    
+    backspaceButton.addEventListener('click', () => {
+        deleteLetter();
+    })
+
+    startButton.addEventListener('click', () => {
+        play();
+        startButton.style.display = "none";
+    })
+
+    enterButton.addEventListener('click', () => {
+      submitResponse();
+    })
+
+    function play() {
+        grid.innerHTML = '';
+        for (let index = 0; index < defaultTryNumber; index++) {
+            let tr = document.createElement('tr');
+            grid.appendChild(tr);
+            for (let i = 0; i < randomWord.length; i++) {
+                let td = document.createElement('td');
+                if (i == 0) {
+                    td.textContent = randomWord[i];
+                }else{
+                    td.textContent = "-";    
+                }
+                tr.appendChild(td);
+            }
+        }
+
+        
+    }
+
+    for (let index = 0; index < letters.length; index++) {
+        letters[index].addEventListener('click' ,() => {
+            addLetter(letters[index].innerText)
+        })
+    }
+
+    function addLetter(letter){
+        if (indexColumn < randomWord.length) {
+            grid.getElementsByTagName('tr')[indexRow].children[indexColumn].innerText = letter;
+            // grid.getElementsByTagName('tr')[indexRow].getElementsByTagName('td')[indexColumn].innerText = letters[index].innerText;
+            indexColumn++;
+            // indexColumn = indexColumn +1;
+        }
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if(e.key.match(/[a-z]/) && e.key.length == 1 ){
+            addLetter(e.key.toUpperCase())
+        }else if(e.key == "Enter"){
+            submitResponse();
+        }else if (e.key == "Backspace"){
+            deleteLetter();
+        }
+    })
+
+    function deleteLetter(){
+        if (indexColumn > 0) {
+            indexColumn--;
+            grid.getElementsByTagName('tr')[indexRow].children[indexColumn].innerText = "-";
+        }
+    }
+
+    function submitResponse(){
+        if (indexColumn == randomWord.length ) {
+            let wordGrid = grid.getElementsByTagName('tr')[indexRow].children;
+            let wordSplit = randomWord.toUpperCase().split("");
+            let countGoodLetter = 0;
+            for (let index = 0; index < wordGrid.length; index++) {
+                if (wordGrid[index].innerText.toUpperCase() == wordSplit[index].toUpperCase()) {
+                    wordGrid[index].classList.add('good-place');
+                    countGoodLetter++;
+                }else if(wordSplit.includes(wordGrid[index].innerText.toUpperCase())){
+                    wordGrid[index].classList.add('bad-place');
+                }else{
+                    wordGrid[index].classList.add('no-place');
+                }
+            }
+            
+            indexColumn = 1;
+            indexRow++;
+            setTimeout(() => {
+                if (countGoodLetter == randomWord.length) {
+                    alert('Victoire !!!')
+                    indexColumn = 1;
+                    indexRow = 0;
+                    play();
+                }
+            }, 50)
+           
+        }else{
+            alert("Le mot n'est pas complet");
+        }
+    }
+
 })
