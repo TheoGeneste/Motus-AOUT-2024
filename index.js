@@ -1,3 +1,4 @@
+
 document.addEventListener('DOMContentLoaded', async () => {
     const startButton = document.getElementById('start');
     const grid = document.getElementById('grid');
@@ -20,10 +21,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         startButton.style.display = "none";
     })
 
-    enterButton.addEventListener('click', () => {
+    enterButton.addEventListener('click', () => {   
         submitResponse();
     })
 
+    async function responseContains(string) {
+        try {   
+            console.log(string);
+            
+          const content = await fetch("./larousse.txt").then(response => response.text());
+          return content.includes(string.toUpperCase());
+        }
+        catch (e) {
+          console.log(e);
+          throw e;
+        }
+      }
+      
     async function play() {
         for (let index = 0; index < letters.length; index++) {
             letters[index].className = "btn-letter";
@@ -32,7 +46,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         randomWord = await fetch("https://trouve-mot.fr/api/random")
             .then((response) => response.json())
             .then((words) => words[0].name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase());
-        console.log(randomWord);
+            console.log(randomWord);
+            
         goodLetters = [];
         grid.innerHTML = '';
         for (let index = 0; index < defaultTryNumber; index++) {
@@ -92,83 +107,97 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    function submitResponse() {
+    async function submitResponse() {
+        let wordToCheck = '';
+        for (let index = 0; index < grid.getElementsByTagName('tr')[indexRow].children.length; index++) {
+            wordToCheck = wordToCheck + grid.getElementsByTagName('tr')[indexRow].children[index].innerText;
+        }
+        console.log(wordToCheck);
+        
+        
         if (indexColumn == randomWord.length) {
-            let wordGrid = grid.getElementsByTagName('tr')[indexRow].children;
-            let nextWordGrid = [];
-            if (indexRow < defaultTryNumber - 1) {
-                nextWordGrid = grid.getElementsByTagName('tr')[indexRow + 1].children;
-            }
-            let wordSplit = randomWord.toUpperCase().split("");
-            let numberIterationOfLetter = {};
-            wordSplit.forEach(element => {
-                if (numberIterationOfLetter[element]) {
-                    numberIterationOfLetter[element] += 1;
-                } else {
-                    numberIterationOfLetter[element] = 1;
+            if (await responseContains(wordToCheck)) {
+                let wordGrid = grid.getElementsByTagName('tr')[indexRow].children;
+                let nextWordGrid = [];
+                if (indexRow < defaultTryNumber - 1) {
+                    nextWordGrid = grid.getElementsByTagName('tr')[indexRow + 1].children;
                 }
-            });
-
-            let countGoodLetter = 0;
-            for (let index = 0; index < wordGrid.length; index++) {
-                let buttonLetter = document.querySelectorAll("[data-letter='" + wordGrid[index].innerText.toUpperCase() + "']");
-                if (wordGrid[index].innerText.toUpperCase() == wordSplit[index].toUpperCase()) {
-                    if (numberIterationOfLetter[wordGrid[index].innerText.toUpperCase()] > 0) {
-                        wordGrid[index].classList.add('good-place');
-                        buttonLetter[0].classList.add('good-place');
+                let wordSplit = randomWord.toUpperCase().split("");
+                let numberIterationOfLetter = {};
+                wordSplit.forEach(element => {
+                    if (numberIterationOfLetter[element]) {
+                        numberIterationOfLetter[element] += 1;
+                    } else {
+                        numberIterationOfLetter[element] = 1;
                     }
-                    goodLetters[index] = wordGrid[index].innerText;
-                    numberIterationOfLetter[wordGrid[index].innerText.toUpperCase()] -= 1;
-                    countGoodLetter++;
-                }
-            }
-            for (let index = 0; index < wordGrid.length; index++) {
-                let buttonLetter = document.querySelectorAll("[data-letter='" + wordGrid[index].innerText.toUpperCase() + "']");
-                if (wordSplit.includes(wordGrid[index].innerText.toUpperCase())) {
-                    if (numberIterationOfLetter[wordGrid[index].innerText.toUpperCase()] > 0) {
-                        wordGrid[index].classList.add('bad-place');
-                        buttonLetter[0].classList.add('bad-place');
-                    }else{
-                        if (!wordGrid[index].classList.contains('good-place') && !wordGrid[index].classList.contains('bad-place')) {
-                            wordGrid[index].classList.add('no-place');
-                            buttonLetter[0].classList.add('no-place');
+                });
+    
+                let countGoodLetter = 0;
+                for (let index = 0; index < wordGrid.length; index++) {
+                    let buttonLetter = document.querySelectorAll("[data-letter='" + wordGrid[index].innerText.toUpperCase() + "']");
+                    if (wordGrid[index].innerText.toUpperCase() == wordSplit[index].toUpperCase()) {
+                        if (numberIterationOfLetter[wordGrid[index].innerText.toUpperCase()] > 0) {
+                            wordGrid[index].classList.add('good-place');
+                            buttonLetter[0].classList.add('good-place');
                         }
+                        goodLetters[index] = wordGrid[index].innerText;
+                        numberIterationOfLetter[wordGrid[index].innerText.toUpperCase()] -= 1;
+                        countGoodLetter++;
                     }
-                    numberIterationOfLetter[wordGrid[index].innerText.toUpperCase()] -= 1;
-                } else {
-                    wordGrid[index].classList.add('no-place');
-                    buttonLetter[0].classList.add('no-place');
                 }
-            }
-            console.log(numberIterationOfLetter);
-            
-            setTimeout(() => {
-                if (countGoodLetter == randomWord.length) {
-                    alert('Victoire !!!')
-                    indexColumn = 1;
-                    indexRow = 0;
-                    play();
-                } else if (indexRow + 1 == defaultTryNumber) {
-                    alert('Vous avez perdu le mot était : ' + randomWord);
-                    indexColumn = 1;
-                    indexRow = 0;
-                    play();
-                } else {
-                    for (let index = 0; index < goodLetters.length; index++) {
-                        if (goodLetters[index] != undefined) {
-                            nextWordGrid[index].innerText = goodLetters[index];
+                for (let index = 0; index < wordGrid.length; index++) {
+                    let buttonLetter = document.querySelectorAll("[data-letter='" + wordGrid[index].innerText.toUpperCase() + "']");
+                    if (wordSplit.includes(wordGrid[index].innerText.toUpperCase())) {
+                        if (numberIterationOfLetter[wordGrid[index].innerText.toUpperCase()] > 0) {
+                            if (!wordGrid[index].classList.contains('good-place') ) {
+                                wordGrid[index].classList.add('bad-place');
+                                buttonLetter[0].classList.add('bad-place');
+                            }
+                        }else{
+                            if (!wordGrid[index].classList.contains('good-place') && !wordGrid[index].classList.contains('bad-place')) {
+                                wordGrid[index].classList.add('no-place');
+                                buttonLetter[0].classList.add('no-place');
+                            }
                         }
+                        numberIterationOfLetter[wordGrid[index].innerText.toUpperCase()] -= 1;
+                    } else {
+                        wordGrid[index].classList.add('no-place');
+                        buttonLetter[0].classList.add('no-place');
                     }
-
-                    grid.getElementsByTagName('tr')[indexRow].children[indexColumn - 1].classList.remove('cursor');
-
-
-                    indexColumn = 1;
-                    indexRow++;
-                    grid.getElementsByTagName('tr')[indexRow].children[indexColumn].classList.add('cursor');
                 }
-            }, 50)
-
+                console.log(numberIterationOfLetter);
+                
+                setTimeout(() => {
+                    if (countGoodLetter == randomWord.length) {
+                        alert('Victoire !!!')
+                        indexColumn = 1;
+                        indexRow = 0;
+                        play();
+                    } else if (indexRow + 1 == defaultTryNumber) {
+                        alert('Vous avez perdu le mot était : ' + randomWord);
+                        indexColumn = 1;
+                        indexRow = 0;
+                        play();
+                    } else {
+                        for (let index = 0; index < goodLetters.length; index++) {
+                            if (goodLetters[index] != undefined) {
+                                nextWordGrid[index].innerText = goodLetters[index];
+                            }
+                        }
+    
+                        grid.getElementsByTagName('tr')[indexRow].children[indexColumn - 1].classList.remove('cursor');
+    
+    
+                        indexColumn = 1;
+                        indexRow++;
+                        grid.getElementsByTagName('tr')[indexRow].children[indexColumn].classList.add('cursor');
+                    }
+                }, 50)    
+            }else{
+                alert('Ce mot n\'existe pas')
+                
+            }
+           
 
 
         } else {
