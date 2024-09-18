@@ -82,13 +82,17 @@ td{
 }
 
 .good-place{
-    background-color: var(--red-color);
+    background-color: var(--red-color) !important;
 }
 
 .bad-place{
-    background-color: var(--yellow-color);
+    background-color: var(--yellow-color) !important;
 }
 
 .no-place{
-    background-color: rgb(58, 57, 57);
+    background-color: rgb(58, 57, 57) !important;
+}
+
+.cursor{
+    background-color: aqua !important;
 }
